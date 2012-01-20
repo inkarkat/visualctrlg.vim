@@ -53,7 +53,7 @@ Default keymappings
 g<C-g>		<Plug>(visualctrlg-verbosely)
 
 These get setup using: >
-	silent! vmap <unique> g<C-g> <Plug>(visualctrlg-verbosely)
+	silent! xmap <unique> g<C-g> <Plug>(visualctrlg-verbosely)
 	silent! vmap <unique> <C-g>  <Plug>(visualctrlg-briefly)
 }}}
 ------------------------------------------------------------------------------

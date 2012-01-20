@@ -20,7 +20,7 @@ vnoremap <silent> <Plug>(visualctrlg-briefly)   :<C-u>call visualctrlg#report_br
 if !exists('g:visualctrlg_no_default_keymappings')
 \   || !g:visualctrlg_no_default_keymappings
     if !hasmapto('<Plug>(visualctrlg-verbosely)', 'v', 0)
-        silent! vmap <unique> g<C-g> <Plug>(visualctrlg-verbosely)
+        silent! xmap <unique> g<C-g> <Plug>(visualctrlg-verbosely)
     endif
     if !hasmapto('<Plug>(visualctrlg-briefly)', 'v', 0)
         silent! vmap <unique> <C-g>  <Plug>(visualctrlg-briefly)
