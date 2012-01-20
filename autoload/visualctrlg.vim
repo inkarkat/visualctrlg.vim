@@ -19,8 +19,10 @@ function! visualctrlg#report(verbose) "{{{
 
     let lines_num = getpos("'>")[1] - getpos("'<")[1] + 1
     if a:verbose
-        echo printf('%d line(s), %d byte(s), %d char(s), %d width, %d display width',
-        \           lines_num, strlen(text), s:strchars(text), s:strwidth(text), s:strdisplaywidth(text))
+        let displaywidth = s:FormatRange('display width', s:DetermineWidth(text, s:strdisplaywidth))
+        let netwidth     = s:FormatRange('net width'    , s:DetermineWidth(text, function('s:NetWidth')))
+        echo printf('%d line(s), %d byte(s), %d char(s), %s, %s',
+        \           lines_num, strlen(text), s:strchars(text), netwidth, displaywidth)
     else
         echo printf('%d line(s), %d byte(s), %d char(s)',
         \           lines_num, strlen(text), s:strchars(text))
@@ -50,6 +52,22 @@ function! s:get_selected_text() "{{{
     endtry
 endfunction "}}}
 
+function! s:DetermineWidth(text, Func)
+    let widths = map(split(a:text, "\n", 1), 'call(a:Func, [v:val])')
+    if empty(widths[-1])
+        " Ignore the trailing newline when processing entire lines.
+        call remove(widths, -1)
+    endif
+    return [min(widths), max(widths)]
+endfunction
+function! s:NetWidth(text)
+    return s:strdisplaywidth(substitute(a:text, '^\s*\(.\{-}\)\s*$', '\1', ''))
+endfunction
+function! s:FormatRange(rangestring, range)
+    let [min, max] = a:range
+    return (min == max || min == 0 ? max . ' ' . a:rangestring : a:rangestring . ' between ' . min . ' and ' . max)
+endfunction
+
 " strchars() {{{
 if exists('*strchars')
     let s:strchars = function('strchars')
@@ -59,57 +77,12 @@ else
     endfunction
 endif
 " }}}
-" strwidth() {{{
-if exists('*strwidth')
-    let s:strwidth = function('strwidth')
-else
-    " From s:wcswidth() of googlereader.vim. mattn++
-    function! s:strwidth(expr)
-        let mx_first = '^\(.\)'
-        let str = a:expr
-        let width = 0
-        while 1
-            let ucs = char2nr(substitute(str, mx_first, '\1', ''))
-            if ucs == 0
-                break
-            endif
-            let width = width + s:wcwidth(ucs)
-            let str = substitute(str, mx_first, '', '')
-        endwhile
-        return width
-    endfunction
-    " From s:wcwidth() of googlereader.vim. ++mattn++
-    " (yes, I know the difference between lvalue and rvalue.
-    " it results in "error: lvalue required as increment operand" in gcc.)
-    function! s:wcwidth(expr)
-        " XXX: 'ambiwidth', 'display'
-        let ucs = a:expr
-        if (ucs >= 0x1100
-        \  && (ucs <= 0x115f
-        \  || ucs == 0x2329
-        \  || ucs == 0x232a
-        \  || (ucs >= 0x2e80 && ucs <= 0xa4cf
-        \      && ucs != 0x303f)
-        \  || (ucs >= 0xac00 && ucs <= 0xd7a3)
-        \  || (ucs >= 0xf900 && ucs <= 0xfaff)
-        \  || (ucs >= 0xfe30 && ucs <= 0xfe6f)
-        \  || (ucs >= 0xff00 && ucs <= 0xff60)
-        \  || (ucs >= 0xffe0 && ucs <= 0xffe6)
-        \  || (ucs >= 0x20000 && ucs <= 0x2fffd)
-        \  || (ucs >= 0x30000 && ucs <= 0x3fffd)
-        \  ))
-            return 2
-        endif
-        return 1
-    endfunction
-endif
-" }}}
 " strdisplaywidth() {{{
 if exists('*strdisplaywidth')
     let s:strdisplaywidth = function('strdisplaywidth')
 else
     " From s:strdisplaywidth() of autofmt.vim. ynkdir++
-    function s:strdisplaywidth(str, ...)
+    function! s:emulate_strdisplaywidth(str, ...)
         let vcol = get(a:000, 0, 0)
         let w = 0
         for c in split(a:str, '\zs')
@@ -127,6 +100,7 @@ else
         endfor
         return w
     endfunction
+    let s:strdisplaywidth = function('s:emulate_strdisplaywidth')
 endif
 " }}}
 
