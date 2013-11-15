@@ -11,21 +11,25 @@ function! visualctrlg#load() "{{{
     " dummy function to load this script.
 endfunction "}}}
 
-
+function! s:Plural(num)
+    return a:num == 1 ? '' : 's'
+endfunction
 function! visualctrlg#report(verbose) "{{{
     let default = 1
     let sleep_arg = v:count != 0 ? v:count : default
     let text = s:get_selected_text()
 
     let lines_num = getpos("'>")[1] - getpos("'<")[1] + 1
+    let byte_num = strlen(text)
+    let char_num = s:strchars(text)
     if a:verbose
         let displaywidth = s:FormatRange('display width', s:DetermineWidth(text, s:strdisplaywidth))
         let netwidth     = s:FormatRange('net width'    , s:DetermineWidth(text, function('s:NetWidth')))
-        echo printf('%d line(s), %d byte(s), %d char(s), %s, %s',
-        \           lines_num, strlen(text), s:strchars(text), netwidth, displaywidth)
+        echo printf('%d line%s, %d byte%s, %d char%s, %s, %s',
+        \           lines_num, s:Plural(lines_num), byte_num, s:Plural(byte_num), char_num, s:Plural(char_num), netwidth, displaywidth)
     else
-        echo printf('%d line(s), %d byte(s), %d char(s)',
-        \           lines_num, strlen(text), s:strchars(text))
+        echo printf('%d line%s, %d byte%s, %d char%s',
+        \           lines_num, s:Plural(lines_num), byte_num, s:Plural(byte_num), char_num, s:Plural(char_num))
     endif
 
     " Sleep to see the output in command-line.
