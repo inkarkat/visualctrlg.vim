@@ -18,6 +18,10 @@ function! visualctrlg#report(verbose) "{{{
     let default = 1
     let sleep_arg = v:count != 0 ? v:count : default
     let text = s:get_selected_text()
+    if &l:fileformat ==# 'dos'
+        " Count both CR and LF even though internally Vim only stores the latter.
+        let text = substitute(text, '\n', '\r&', 'g')
+    endif
 
     let lines_num = getpos("'>")[1] - getpos("'<")[1] + 1
     let byte_num = strlen(text)
